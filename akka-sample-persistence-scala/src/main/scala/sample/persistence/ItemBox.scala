@@ -6,8 +6,6 @@ package sample.persistence
 // should not be possible addItem, if
 // maxCapacity is already surpassed or the object to add surpasses it.
 // after adding an item it should get back info about how much it still can hold
-//
-
 
 import akka.actor.typed.Behavior
 import akka.persistence.typed.PersistenceId
@@ -44,10 +42,10 @@ object ItemBox {
   final case class ItemAdded(boxId: String, item: Item) extends Event
 
   def itemFits(state: State, item: Item): Boolean = {
-    state.capacity >= item.size
+    state.capacity >= (state.utilized + item.size)
   }
 
-  def getRemainingRoom(state: State): Int = state.capacity
+  def getRemainingRoom(state: State): Int = state.capacity - state.utilized
 
   def apply(boxId: String): Behavior[Command] = {
     EventSourcedBehavior[Command, Event, State](PersistenceId("Box", boxId),
@@ -62,7 +60,7 @@ object ItemBox {
               Effect
                 .persist(ItemAdded(id, item))
                 .thenRun(updatedBox => {
-                  replyTo ! ItemAccepted(getRemainingRoom(updatedBox) - item.size)
+                  replyTo ! ItemAccepted(getRemainingRoom(updatedBox))
                 })
             }
           }

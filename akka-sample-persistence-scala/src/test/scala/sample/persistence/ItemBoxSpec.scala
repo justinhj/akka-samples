@@ -33,14 +33,17 @@ class ItemBoxSpec extends ScalaTestWithActorTestKit(s"""
       probe.expectMessage(ItemBox.ItemCannotFit(10))
     }
 
-    "add multiple items" in {
+    "add multiple items until failure" in {
       val box = testKit.spawn(ItemBox(newBoxId()))
       val probe = testKit.createTestProbe[ItemBox.Confirmation]
 
-      (1 to 10).foreach {
+      (1 to 11).foreach {
         n =>
           box ! ItemBox.AddItem(s"test item s", ItemBox.Item("Single Black Socks", 1), probe.ref)
-          probe.expectMessage(ItemBox.ItemAccepted(10 - n))
+          if(n < 11)
+            probe.expectMessage(ItemBox.ItemAccepted(10 - n))
+          else
+            probe.expectMessage(ItemBox.ItemCannotFit(0))
       }
     }
 

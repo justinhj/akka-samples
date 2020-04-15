@@ -123,7 +123,7 @@ object ShoppingCart {
 
   def apply(cartId: String): Behavior[Command] = {
     EventSourcedBehavior[Command, Event, State](
-      PersistenceId("ShoppingCart", cartId),
+      PersistenceId(cartId),
       State.empty,
       (state, command) =>
         //The shopping cart behavior changes if it's checked out or not.

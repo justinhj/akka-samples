@@ -29,7 +29,7 @@ object ItemBox {
     def remainingRoom = capacity - utilized
   }
 
-  final case class AddItem(boxId: String, item: Item, replyTo: ActorRef[Confirmation]) extends Command
+  final case class AddItem(item: Item, replyTo: ActorRef[Confirmation]) extends Command
 
   sealed trait Confirmation extends CborSerializable
 
@@ -48,17 +48,17 @@ object ItemBox {
   def getRemainingRoom(state: State): Int = state.capacity - state.utilized
 
   def apply(boxId: String): Behavior[Command] = {
-    EventSourcedBehavior[Command, Event, State](PersistenceId("Box", boxId),
+    EventSourcedBehavior[Command, Event, State](PersistenceId(boxId),
       State.empty,
       (state, command) => {
         command match {
-          case AddItem(id, item, replyTo) => {
+          case AddItem(item, replyTo) => {
             if(!itemFits(state, item)) {
               replyTo ! ItemCannotFit(getRemainingRoom(state))
               Effect.none
             } else {
               Effect
-                .persist(ItemAdded(id, item))
+                .persist(ItemAdded(boxId, item))
                 .thenRun(updatedBox => {
                   replyTo ! ItemAccepted(getRemainingRoom(updatedBox))
                 })
@@ -68,7 +68,7 @@ object ItemBox {
       },
       (state, event) => {
           event match {
-            case ItemAdded(id, item) =>
+            case ItemAdded(boxId, item) =>
               state.copy(items = state.items :+ item)
           }
         })

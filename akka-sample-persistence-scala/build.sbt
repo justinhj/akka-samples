@@ -2,14 +2,17 @@ organization := "com.lightbend.akka.samples"
 name := "akka-sample-persistence-scala"
 
 scalaVersion := "2.13.1"
-def akkaVersion = "2.6.4"
+def akkaVersion = "2.5.25"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence-typed" % akkaVersion,
-  "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
+  "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
+  "com.github.dnvriend" %% "akka-persistence-jdbc" % "3.5.3",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
-  "org.scalatest" %% "scalatest" % "3.1.0" % Test
+  "org.scalatest" %% "scalatest" % "3.0.8" % Test,
+  "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
+  "mysql" % "mysql-connector-java" % "5.1.24"
 )
 
 scalacOptions in Compile ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlog-reflective-calls", "-Xlint")

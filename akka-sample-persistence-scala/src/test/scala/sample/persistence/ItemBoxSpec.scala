@@ -6,6 +6,10 @@ import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
+import akka.persistence.query.PersistenceQuery
+import akka.persistence.jdbc.query.scaladsl.JdbcReadJournal
+import akka.stream.scaladsl.Source
+import akka.NotUsed
 
 object ItemBoxSpec {
   val config = s"""
@@ -22,6 +26,28 @@ class ItemBoxSpec extends ScalaTestWithActorTestKit(ItemBoxSpec.config2) with Wo
   def newBoxId(): String = {
     counter += 1
     s"box-$counter"
+  }
+
+
+  "The events from the ItemBox" should {
+    "be consumed by the event processor" in {
+
+      val queries = PersistenceQuery(system)
+        .readJournalFor[JdbcReadJournal](JdbcReadJournal.Identifier)
+
+      val box = testKit.spawn(ItemBox("unique-id"))
+      val probe = testKit.createTestProbe[ItemBox.Confirmation]
+      box ! ItemBox.AddItem(ItemBox.Item("Black Socks", 5), probe.ref)
+      probe.expectMessage(ItemBox.ItemAccepted(5))
+
+      val source: Source[String, NotUsed] =
+        queries.persistenceIds()
+          source.runForeach { event =>
+        println("####################################Event: " + event)
+      }
+
+      Thread.sleep(5000)
+    }
   }
 
   "The Item Box" should {
